@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Engineering Intelligence</title><link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body>
+<header><div><span class="eyebrow">GITHUB ENGINEERING INTELLIGENCE</span><h1 th:text="${dashboard.repository}">Repository</h1>
+  <p>Delivery and reliability signals for improving systems—not scoring people.</p></div><span class="demo">Synthetic demo</span></header>
+<main>
+  <section class="cards" aria-label="Delivery summary">
+    <article><label>Median PR cycle</label><strong th:text="${#numbers.formatDecimal(dashboard.summary.medianCycleHours,1,1)}+'h'">0h</strong><small>Opened → merged</small></article>
+    <article><label>Median review wait</label><strong th:text="${#numbers.formatDecimal(dashboard.summary.medianReviewWaitHours,1,1)}+'h'">0h</strong><small>Requested → first response</small></article>
+    <article><label>Open pull requests</label><strong th:text="${dashboard.summary.openPullRequests}">0</strong><small>Current work in progress</small></article>
+    <article><label>Releases / month</label><strong th:text="${#numbers.formatDecimal(dashboard.summary.releasesPerMonth,1,1)}">0</strong><small>Trailing 90 days</small></article>
+    <article><label>Open issues</label><strong th:text="${dashboard.summary.openIssues}">0</strong><small>All age bands</small></article>
+  </section>
+  <section class="grid">
+    <article class="panel"><h2>Large or risky pull requests</h2><p>Explainable size signal; not a quality judgment.</p><table><thead><tr><th>PR</th><th>Churn</th><th>Files</th><th>Signal</th></tr></thead><tbody>
+      <tr th:each="r:${dashboard.riskyPullRequests}"><td th:text="'#'+${r.number}">#1</td><td th:text="${r.size}">0</td><td th:text="${r.changedFiles}">0</td><td><span class="pill" th:classappend="${r.level}" th:text="${r.level}+' '+${r.score}">risk</span></td></tr>
+    </tbody></table></article>
+    <article class="panel"><h2>Frequently changed files</h2><p>Change concentration over available PR history.</p><table><thead><tr><th>Path</th><th>PRs</th><th>Churn</th></tr></thead><tbody>
+      <tr th:each="f:${dashboard.frequentlyChangedFiles}"><td class="path" th:text="${f.path}">path</td><td th:text="${f.changes}">0</td><td th:text="${f.churn}">0</td></tr>
+    </tbody></table></article>
+    <article class="panel"><h2>Low test coverage</h2><p>Latest imported JaCoCo, Cobertura, or LCOV snapshot below 70%.</p><table><thead><tr><th>Path</th><th>Coverage</th><th>Source</th></tr></thead><tbody>
+      <tr th:each="c:${dashboard.lowCoverageAreas}"><td class="path" th:text="${c.path}">path</td><td th:text="${#numbers.formatDecimal(c.lineCoverage,1,0)}+'%'">0%</td><td th:text="${c.format}">format</td></tr>
+    </tbody></table></article>
+    <article class="panel"><h2>Issue aging</h2><p>Open issues grouped into transparent age bands.</p><div class="bars" th:each="a:${dashboard.issueAging}"><span th:text="${a.bucket}">band</span><b th:style="'width:'+${a.count*18}+'px'" th:text="${a.count}">0</b></div></article>
+    <article class="panel"><h2>Flaky CI signals</h2><p>Same workflow job and commit failed, then passed.</p><div class="empty" th:if="${#lists.isEmpty(dashboard.flakyJobs)}">No candidates in this window.</div><div class="row" th:each="j:${dashboard.flakyJobs}"><span th:text="${j.workflow}+' / '+${j.job}">job</span><strong th:text="${j.occurrences}">0</strong></div></article>
+    <article class="panel"><h2>Files involved in bugs</h2><p>Bug-labelled issues linked to fixing PR paths.</p><div class="row" th:each="b:${dashboard.bugHotspots}"><span class="path" th:text="${b.path}">path</span><strong th:text="${b.linkedBugs}">0</strong></div></article>
+    <article class="panel"><h2>Team workload resilience</h2><p th:text="${dashboard.workload.interpretation}">Interpretation</p><div class="metric"><strong th:text="${dashboard.workload.pendingReviews}">0</strong><span>pending review requests</span></div><div class="notice" th:if="${dashboard.workload.suppressed}">Concentration hidden by minimum-cohort privacy policy.</div><div class="metric" th:unless="${dashboard.workload.suppressed}"><strong th:text="${#numbers.formatDecimal(dashboard.workload.concentrationPercent,1,0)}+'%'">0%</strong><span>largest share of pending demand</span></div></article>
+    <article class="panel quality"><h2>Evidence quality</h2><dl><dt>Source</dt><dd th:text="${dashboard.dataQuality.source}">source</dd><dt>Freshness</dt><dd th:text="${dashboard.dataQuality.freshness}">freshness</dd><dt>Confidence</dt><dd th:text="${dashboard.dataQuality.confidence}">confidence</dd></dl><p th:text="${dashboard.dataQuality.limitation}">limitation</p></article>
+  </section>
+</main><footer>Metric definitions are versioned and intended for team-level system improvement.</footer>
+</body></html>
+

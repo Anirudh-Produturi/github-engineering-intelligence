@@ -11,6 +11,9 @@ An organization-level engineering delivery and reliability dashboard built aroun
 - Unit and PostgreSQL integration tests
 - Docker Compose development environment
 - Python worker boundary reserved for ingestion and metric computation
+- Server-rendered Spring/Thymeleaf engineering metrics dashboard
+- Synthetic PR, review, file, issue, CI, release, coverage, and bug-link evidence
+- JSON metric API backed by the same calculations as the UI
 
 No individual productivity scores or source-code contents are collected.
 
@@ -24,6 +27,8 @@ docker compose up --build
 ```
 
 The API health endpoint is `http://localhost:8080/actuator/health`.
+
+Open the personal demo dashboard at `http://localhost:8080/`. Its synthetic dataset demonstrates PR cycle time, review wait time, changed-file frequency, coverage risk, flaky CI candidates, PR size/risk, issue aging, release frequency, bug hotspots, and privacy-protected team workload concentration.
 
 Personal mode is the default. It seeds a clearly synthetic organization and repository and permits local API access without configuring an identity provider. Check the active behavior at `GET /api/v1/system/mode`.
 
@@ -43,6 +48,9 @@ cd services/api
 ```
 
 The checked-in Gradle Wrapper provides a consistent build without requiring a system Gradle installation. The integration test uses Testcontainers and therefore needs Docker.
+
+Coverage parsing supports JaCoCo XML, Cobertura XML, and LCOV. Live report upload and GitHub historical backfill remain future ingestion work; the current dashboard uses synthetic evidence so it runs without credentials.
+
 
 ## Documentation
 
