@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: engineering-intelligence-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/engineering_intelligence}
+    username: ${SPRING_DATASOURCE_USERNAME:engineering_intelligence}
+    password: ${SPRING_DATASOURCE_PASSWORD:change-me}
+  flyway:
+    schemas: integration
+    default-schema: integration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+github:
+  webhook-secret: ${GITHUB_WEBHOOK_SECRET:personal-development-secret-change-before-sharing}
+app:
+  mode: ${APP_MODE:personal}
+  demo:
+    enabled: ${DEMO_DATA_ENABLED:true}
+  security:
+    oidc-issuer: ${OIDC_ISSUER:}
+    minimum-cohort-size: ${MINIMUM_COHORT_SIZE:3}
+

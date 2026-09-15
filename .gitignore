@@ -1,0 +1,12 @@
+.idea/
+.vscode/
+.env
+*.iml
+target/
+.gradle/
+.gradle-user-home/
+build/
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc

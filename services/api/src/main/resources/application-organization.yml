@@ -1,0 +1,13 @@
+app:
+  mode: organization
+  demo:
+    enabled: false
+  security:
+    oidc-issuer: ${OIDC_ISSUER}
+    minimum-cohort-size: ${MINIMUM_COHORT_SIZE:5}
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER}
