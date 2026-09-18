@@ -10,7 +10,7 @@ An organization-level engineering delivery and reliability dashboard built aroun
 - Flyway-managed schema
 - Unit and PostgreSQL integration tests
 - Docker Compose development environment
-- Python worker boundary reserved for ingestion and metric computation
+- Python worker boundary reserved for future high-volume ingestion and backfills
 - Server-rendered Spring/Thymeleaf engineering metrics dashboard
 - Synthetic PR, review, file, issue, CI, release, coverage, and bug-link evidence
 - JSON metric API backed by the same calculations as the UI
@@ -57,6 +57,12 @@ Coverage parsing supports JaCoCo XML, Cobertura XML, and LCOV. Live report uploa
 ## Documentation
 
 - [MVP product and architecture](outputs/mvp-product-architecture.md)
-- [Architecture decision: modular monolith and worker](docs/adr/0001-service-boundaries.md)
+- [Implementation status and capability matrix](docs/implementation-status.md)
+- [Metric definitions](docs/metric-definitions.md)
+- [API reference](docs/api-reference.md)
+- [Demo walkthrough](docs/demo-walkthrough.md)
+- [Architecture decision: service boundaries](docs/adr/0001-service-boundaries.md)
 - [Architecture decision: dual-mode deployment](docs/adr/0002-dual-mode-deployment.md)
+- [Architecture decision: server-rendered AI impact slice](docs/adr/0003-server-rendered-ai-impact-slice.md)
 - [Responsible-use policy](docs/responsible-use.md)
+- [Changelog](CHANGELOG.md)

@@ -1,239 +1,207 @@
-# GitHub Engineering Intelligence Dashboard
+# GitHub Engineering Intelligence — Product and Architecture
 
-## MVP product brief
+Last updated: 2026-09-18
 
-### Product goal
+## Product goal
 
-Give engineering leaders and teams an evidence-based view of delivery flow and software reliability using GitHub system data, without ranking or monitoring individuals.
+Help engineering teams understand delivery performance, identify responsible AI-assistance opportunities, and measure whether engineering outcomes changed after a time-boxed intervention—without scoring or monitoring individuals.
 
-The MVP should help a team answer:
+The implemented personal demo answers:
 
-1. How smoothly does work move from first commit to production release?
-2. Where does pull-request flow accumulate delay or rework?
-3. Are releases becoming safer and easier to recover from?
-4. How complete and trustworthy is the underlying evidence?
+1. Where is delivery flow constrained?
+2. Which engineering signals changed between a baseline and current period?
+3. Which AI capabilities are underused at the team level?
+4. Which bounded experiment is supported by both an engineering constraint and an adoption gap?
+5. How complete and trustworthy is the evidence?
 
-### Intended users
+## Current implementation scope
 
-- Engineering managers: identify process constraints and discuss trends with teams.
-- Staff engineers and platform teams: find systemic review, CI, and release bottlenecks.
-- Engineering executives: view organization-level trends with explicit data-quality context.
-- Repository administrators: configure access, repositories, teams, and collection health.
+The current release is a credential-free, synthetic vertical slice. It includes:
 
-### MVP scope
+- Java 21 and Spring Boot 3.5 API.
+- Spring MVC and Thymeleaf server-rendered dashboard.
+- PostgreSQL 17 with four Flyway migrations.
+- Personal and organization configuration modes.
+- Synthetic repository, PR, review, issue, file, CI, release, coverage, bug-link, adoption, period, and intervention evidence.
+- GitHub webhook HMAC-SHA256 verification and idempotent durable inbox.
+- JSON metrics API backed by the same query model as the HTML dashboard.
+- Explainable, deterministic AI opportunity rules.
+- JaCoCo XML, Cobertura XML, and LCOV parsing.
+- OIDC/JWT enforcement in organization mode.
+- Configurable minimum-cohort privacy suppression.
+- Gradle unit and PostgreSQL/Testcontainers integration tests.
+- Docker Compose local environment and GitHub Actions CI.
 
-The first release supports one GitHub organization and selected repositories. It provides:
+## Current non-goals and limitations
 
-- A GitHub App installation using least-privilege, read-only repository access.
-- Initial backfill plus webhook-driven incremental ingestion.
-- Collection of repository metadata, pull requests, reviews, issues, commits/change statistics, workflow runs/jobs, deployments, and releases.
-- Organization, team, repository, and time-range filters.
-- Delivery-flow and reliability metrics at team/repository or higher aggregation.
-- Metric definitions, provenance, confidence/data-completeness indicators, and drill-down to contributing events.
-- Collection health, webhook status, sync lag, and audit events.
-- A documented demo dataset that contains no real employee data.
+- No individual productivity score, ranking, leaderboard, or comparison.
+- No inference of effort or performance from commit counts, lines changed, working hours, or after-hours activity.
+- No claim that AI caused an observed outcome change; the UI explicitly labels the comparison as correlation.
+- No live GitHub historical backfill yet.
+- No webhook-to-normalized-evidence processor yet; webhook deliveries are authenticated and stored only.
+- No live AI-tool telemetry ingestion; adoption values in the personal demo are synthetic team survey evidence.
+- No coverage-report upload endpoint yet; parsers are implemented and tested.
+- No team, portfolio, or enterprise roll-up UI yet.
+- No production deployment/incident linkage or DORA reliability calculation yet.
+- Organization mode is not production-ready until tenant-aware query authorization and role mapping are completed.
 
-### Explicit non-goals for the MVP
+## Implemented signal contract
 
-- Individual productivity scores, rankings, leaderboards, or comparisons.
-- Keystroke, active-time, commit-count, lines-of-code, or after-hours activity measures as performance proxies.
-- Performance-management recommendations or automated judgments about people.
-- GitHub Enterprise Server, multiple source-control providers, predictive analytics, or AI-generated management advice.
-- Full incident-management integration. The MVP can calculate recovery-related metrics only when deployment/rollback evidence is sufficiently trustworthy.
-- Exact semantic linkage among issues, pull requests, deployments, and incidents when the organization has not supplied a reliable convention.
-
-## Metrics contract
-
-Every metric must have a versioned definition, numerator/denominator or event formula, inclusion rules, exclusions, time-zone handling, source fields, freshness, and known limitations.
-
-### MVP metrics
-
-| Area | Metric | MVP definition |
+| Dimension | Signal | Implemented definition |
 |---|---|---|
-| Delivery | PR cycle time | Median and percentile time from PR opened to merged, split into pickup time and active review time where evidence allows. |
-| Delivery | Review responsiveness | Time from review request (or PR ready-for-review fallback) to first substantive review. |
-| Delivery | Merge throughput | Merged PR count per week, shown only as a team/repository trend and never as an individual target. |
-| Delivery | Work in progress | Open, non-draft PRs and age bands at the selected aggregate. |
-| Quality | Change/rework proxy | Follow-up commits after requested changes and reopened PRs, labeled as a process signal rather than developer quality. |
-| CI | CI success rate | Successful completed qualifying workflow runs divided by completed qualifying runs. |
-| CI | Time to green | Time from the first qualifying run for a commit/PR to the first successful qualifying run. |
-| Reliability | Deployment frequency | Successful production deployments per period, only for environments mapped as production. |
-| Reliability | Change failure proxy | Production deployments followed by a rollback/revert or linked corrective deployment inside a configured window. Hidden if linkage quality is insufficient. |
-| Reliability | Recovery time proxy | Time from detected failed production deployment to successful corrective deployment. Hidden if linkage quality is insufficient. |
-| Operations | Data freshness/completeness | Sync lag, webhook gaps, API failures, and percentage of required evidence available for each metric. |
+| Speed | PR cycle time | Median elapsed calendar hours from PR opened to merged. |
+| Flow | Review wait | Median elapsed hours from review request to recorded fulfillment. |
+| Flow | Work in progress | Count of currently open pull requests. |
+| Effort | Rework | Synthetic period-level percentage for the AI-impact demo; live event derivation is pending. |
+| Quality | Test coverage | Latest imported file line coverage; paths below 70% are highlighted. |
+| Quality | Bug hotspot | Count of bug-labelled issues linked to fixing-PR paths. |
+| Change risk | PR size signal | Transparent heuristic using churn and changed-file count. |
+| Maintainability | Change frequency | PR/file-change occurrences and churn per path. |
+| CI | Flaky-job candidate | Same workflow job and commit contains both failure and success conclusions. |
+| Planning | Issue aging | Open issues grouped into 0–7, 8–30, and 31+ day bands. |
+| Delivery | Release frequency | Non-prerelease releases in the trailing 90 days divided by three. |
+| Resilience | Review concentration | Largest share of pending review demand, hidden below the configured cohort threshold. |
 
-Issue lead time, release cadence, PR size distribution, and stale-work trends are useful secondary metrics. They should enter only after their semantics and expected decisions are validated with users.
+Full formulas and limitations are in `docs/metric-definitions.md`.
 
-### Responsible-use guardrails
-
-- Aggregate to repository/team by default; suppress slices below a configurable minimum cohort or activity threshold.
-- Never expose an individual leaderboard or a cross-team ranking.
-- Do not infer effort, hours worked, developer quality, or performance from activity traces.
-- Present distributions and trends, not a single composite score.
-- Attach context and uncertainty to every reliability proxy.
-- Keep raw-content collection minimal: prefer IDs, timestamps, states, relationships, and aggregate change counts; do not ingest source code, PR bodies, comments, or diff contents for the MVP.
-- Make metric configuration and definition changes auditable.
-- Document permitted use and explicitly prohibit employment decisions based solely on dashboard data.
-
-## Proposed MVP architecture
-
-Use a modular monolith plus a separately scalable worker. This keeps deployment and data consistency manageable while preserving clear boundaries for later extraction.
+## AI Opportunity and Engineering Impact slice
 
 ```mermaid
 flowchart LR
-    GH[GitHub App + Webhooks] -->|signed events| API[Java / Spring Boot API]
-    API --> INBOX[(PostgreSQL webhook inbox)]
-    GHAPI[GitHub REST + GraphQL APIs] <-->|installation tokens| WORKER[Python ingestion worker]
-    INBOX --> WORKER
-    WORKER --> RAW[(PostgreSQL source snapshots)]
-    RAW --> NORM[(Normalized evidence model)]
-    NORM --> METRICS[Versioned metric computation]
-    METRICS --> MART[(Metric facts + quality facts)]
-    API --> MART
-    UI[React dashboard] <-->|OIDC session + JSON API| API
-    API --> OBS[OpenTelemetry logs, metrics, traces]
-    WORKER --> OBS
+    BASE[Baseline engineering outcomes] --> MATCH[Explainable opportunity matching]
+    ADOPT[Team-level AI adoption] --> MATCH
+    MATCH --> REC[Time-boxed experiment recommendation]
+    REC --> CURRENT[Current-period outcomes]
+    CURRENT --> COMPARE[Before/after comparison]
+    COMPARE --> REVIEW[Contextual review; no causality claim]
 ```
 
-### Technology choices
+Implemented rules:
 
-- **Backend/API:** Java 21, Spring Boot, Spring Security, jOOQ or Spring JDBC, Flyway, and Testcontainers.
-- **Ingestion/analytics worker:** Python 3.13, httpx, Pydantic, SQLAlchemy Core, and pytest. Python handles GitHub pagination, replay, transformation, and metric batches without coupling them to request latency.
-- **Frontend:** React and TypeScript with an accessible charting library. The dashboard should expose metric definitions and underlying evidence, not just charts.
-- **Database:** PostgreSQL 17. It acts as the transactional store, durable webhook inbox, job queue for the MVP, normalized evidence store, and aggregate mart.
-- **Observability:** OpenTelemetry instrumentation, Prometheus-compatible metrics, structured logs, and Grafana dashboards in local/demo deployments.
-- **Packaging:** Dockerfiles per service and Docker Compose for local development/demo. Production manifests are deferred until a target platform is selected.
+- Testing adoption below 50% plus coverage below 80% suggests an AI-assisted testing pilot.
+- PR-review adoption below 50% plus review wait above eight hours suggests an AI-assisted PR-preparation pilot.
+- Coding adoption below 50% plus cycle time above 48 hours suggests a narrowly scoped coding-agent pilot.
 
-If portfolio breadth is less important than delivery speed, the API and worker can both be Python. The Java/Python split is justified only if demonstrating typed enterprise API design and data engineering together is an explicit portfolio goal.
+The rules are visible, deterministic, and tested. They recommend an experiment rather than an automated management decision.
 
-### Logical modules
+## Runtime architecture
 
-1. `identity-access`: dashboard login, organization roles, repository scopes, audit records.
-2. `github-integration`: GitHub App installation state, encrypted secrets, token exchange, webhook signature validation.
-3. `ingestion`: durable event inbox, backfill cursors, API rate-limit handling, retry/dead-letter state, reconciliation.
-4. `evidence`: normalized repositories, teams, PRs, reviews, issues, workflow runs/jobs, deployments, releases, commits, and change summaries.
-5. `metrics`: versioned definitions, computation windows, quality rules, aggregate facts.
-6. `query-api`: filters, trends, comparisons to the same aggregate's prior period, provenance drill-down.
-7. `operations`: health, lag, failures, rate-limit budget, replay, and audit views.
+```mermaid
+flowchart LR
+    USER[Browser] -->|HTML| MVC[Spring MVC + Thymeleaf]
+    CLIENT[API client] -->|JSON| API[Spring REST controllers]
+    GH[GitHub webhooks] -->|HMAC-signed events| WEBHOOK[Webhook controller]
+    WEBHOOK --> INBOX[(Durable webhook inbox)]
+    MVC --> QUERY[Shared dashboard query model]
+    API --> QUERY
+    QUERY --> PG[(PostgreSQL 17)]
+    SEED[Synthetic demo seeder] --> PG
+    FLYWAY[Flyway migrations] --> PG
+    COVERAGE[Coverage parsers] --> FUTURE[Future ingestion boundary]
+```
 
-### Data-flow guarantees
+The checked-in Python worker directory is a reserved future boundary. It is not currently required to run the dashboard. Historical GitHub backfill and asynchronous normalization may be implemented there or in Java after measuring operational needs.
 
-- Verify the webhook HMAC before persisting an event.
-- Persist deliveries idempotently by GitHub delivery ID.
-- Acknowledge only after durable inbox storage; process asynchronously.
-- Use upserts keyed by GitHub node/database IDs and installation/repository scope.
-- Store checkpoints for every backfill stream and reconcile periodically to heal missed events.
-- Record source timestamps separately from observed and processed timestamps.
-- Retain raw webhook payloads briefly for replay, encrypted where supported, then expire them; retain normalized minimal evidence according to policy.
-- Make derived metric facts reproducible by storing metric version, window, source watermark, and computation timestamp.
+## PostgreSQL model
 
-### Initial PostgreSQL boundaries
+```mermaid
+erDiagram
+    GITHUB_ACCOUNT ||--o{ GITHUB_INSTALLATION : owns
+    GITHUB_INSTALLATION ||--o{ REPOSITORY : grants
+    REPOSITORY ||--o{ PULL_REQUEST : contains
+    PULL_REQUEST ||--o{ PULL_REQUEST_REVIEW : receives
+    PULL_REQUEST ||--o{ REVIEW_REQUEST : requests
+    PULL_REQUEST ||--o{ FILE_CHANGE : changes
+    REPOSITORY ||--o{ ISSUE : tracks
+    ISSUE ||--o{ BUG_FILE_LINK : links
+    REPOSITORY ||--o{ WORKFLOW_JOB : runs
+    REPOSITORY ||--o{ RELEASE : publishes
+    REPOSITORY ||--o{ COVERAGE_SNAPSHOT : measures
+    REPOSITORY ||--o{ MEASUREMENT_PERIOD : compares
+    MEASUREMENT_PERIOD ||--o{ METRIC_OBSERVATION : records
+    MEASUREMENT_PERIOD ||--o{ AI_ADOPTION_SNAPSHOT : records
+    REPOSITORY ||--o{ AI_INTERVENTION : pilots
+```
 
-- `integration`: installations, repositories-in-scope, sync cursors, webhook deliveries, ingestion jobs.
-- `evidence`: repositories, teams, pull requests, reviews, issues, commits, workflow runs/jobs, environments, deployments, releases, linkage records.
-- `analytics`: metric definitions, metric runs, metric facts, quality facts, calendar dimensions.
-- `iam`: users, organization roles, sessions/identity mappings, audit events.
+Schema boundaries:
 
-Partition high-volume delivery and workflow event tables by source event month only after measurements justify it. Apply migrations from one owner; services should not mutate schema independently.
+- `integration`: GitHub accounts, installations, webhook deliveries, and sync boundaries.
+- `evidence`: normalized engineering evidence.
+- `analytics`: measurement periods, metric observations, AI adoption snapshots, and interventions.
 
-### Security baseline
+### Migration history
 
-- Use a GitHub App, not a personal access token. Request read-only metadata, pull request, issue, checks/actions, deployment, and contents-metadata permissions only when each dataset needs them.
-- Store the App private key and webhook secret in a secret manager outside source control; encrypt installation-sensitive data at rest.
-- Validate webhook signatures against the exact request bytes, enforce body-size limits, and reject stale/replayed deliveries through idempotency records.
-- Use short-lived installation access tokens and never persist them.
-- Provide dashboard authentication through OIDC, organization-scoped authorization, secure cookies, CSRF protection, and least-privilege database roles.
-- Redact secrets and content from structured logs; emit security-relevant audit events.
-- Pin dependencies and container base images, generate an SBOM, scan code/dependencies/images, and sign release images in CI.
-- Publish a threat model before any internet-facing deployment.
+| Version | Purpose |
+|---|---|
+| V1 | Durable, idempotent webhook inbox. |
+| V2 | Tenant-aware GitHub account, installation, and repository foundation. |
+| V3 | PR, review, file, issue, CI, release, coverage, and bug-link evidence. |
+| V4 | AI adoption, measurement periods, outcomes, and interventions. |
 
-## Milestone backlog
+## Deployment modes
 
-### M0 — Product contract and repository foundation
+### Personal mode
 
-Exit criteria: stakeholders can agree what decisions the product supports and what uses it forbids.
+- Default mode.
+- Docker Compose PostgreSQL and API.
+- Synthetic evidence seeded at startup.
+- No GitHub or identity credentials required.
+- Local APIs are permitted without OIDC.
 
-- Confirm personas, organization shape, target hosting environment, and data-retention constraints.
-- Write metric definition records and a responsible-use policy.
-- Create architecture decision records for language split, GitHub App permissions, PostgreSQL, tenancy, and raw-event retention.
-- Scaffold the monorepo, local tooling, formatting/linting, test conventions, Compose, and CI skeleton.
-- Add C4 context/container diagrams and an initial threat model/data-flow diagram.
+### Organization mode
 
-### M1 — Secure GitHub ingestion vertical slice
+- Same code and tenant-aware schema.
+- Synthetic data disabled.
+- OIDC/JWT authentication required for non-webhook APIs.
+- Minimum cohort defaults to five.
+- A strong non-development webhook secret is required.
+- Still requires tenant-aware query authorization, role mapping, approved secrets, and security review before production use.
 
-Exit criteria: a test GitHub App installation can backfill and incrementally update repositories and pull requests with observable, idempotent processing.
+## Security and responsible-use guarantees
 
-- Implement installation setup and secret configuration.
-- Add signed webhook endpoint and durable inbox.
-- Add repository/PR/review backfill, pagination, rate-limit budgeting, checkpoints, retries, and dead letters.
-- Create Flyway migrations and evidence repositories.
-- Add contract fixtures, unit tests, integration tests with PostgreSQL, and webhook replay tests.
-- Expose collection-health endpoints and telemetry.
+- Webhook signatures are compared in constant time against the exact request body.
+- Delivery IDs provide webhook idempotency.
+- Organization mode refuses unsafe demo, OIDC, cohort, or webhook-secret settings.
+- No source code, diff contents, PR bodies, issue bodies, or comments are required by the current evidence model.
+- Coverage XML parsing blocks document types and external entities.
+- Team workload concentration is suppressed below the configured cohort threshold.
+- AI opportunity rules use aggregate evidence and never output an individual recommendation.
+- Secrets belong in environment injection or an approved secret manager, never Git or prompts.
 
-### M2 — Delivery-flow dashboard
+## Test architecture
 
-Exit criteria: users can see trustworthy PR cycle, responsiveness, throughput, WIP, and data quality for selected repositories and periods.
+- Unit tests for webhook signatures, configuration guardrails, coverage parsing, and opportunity matching.
+- PostgreSQL/Testcontainers tests for migrations, inbox idempotency, demo seeding, JSON metrics, and HTML rendering.
+- Official GitHub webhook HMAC fixture.
+- Docker Compose runtime verification against PostgreSQL 17.
+- Current verified result: 15 tests, zero failures, zero skipped when Docker is available.
 
-- Implement versioned metric definitions and calculation runs.
-- Add aggregate/query API with authorization and caching semantics.
-- Build accessible overview, trend, distribution, and definition/provenance views.
-- Add minimum-cohort suppression and responsible-use copy.
-- Validate calculations against hand-worked golden datasets.
+## Delivery status
 
-### M3 — CI and release evidence
+| Milestone | Status |
+|---|---|
+| Repository, Gradle, Docker, CI, and documentation foundation | Complete |
+| Secure webhook ingress and durable inbox | Complete |
+| Tenant-aware database foundation | Complete |
+| Synthetic engineering evidence | Complete |
+| Server-rendered dashboard and JSON metrics API | Complete |
+| Coverage parsers | Complete |
+| AI adoption, opportunity matching, and before/after demo | Complete |
+| GitHub App lifecycle and historical backfill | Not started |
+| Webhook normalization/reconciliation worker | Not started |
+| Live coverage and AI-adoption ingestion | Not started |
+| Team/portfolio/enterprise aggregation | Not started |
+| Production authorization, operations, and deployment | Partial |
 
-Exit criteria: qualifying workflows and production environments can be configured, and CI/release trends are reproducible.
+## Recommended next milestone
 
-- Ingest workflow runs/jobs, deployments, environments, and releases.
-- Add CI success rate, duration, queue time, time-to-green, deployment frequency, and release cadence.
-- Build mapping/configuration UI for qualifying workflows and production environments.
-- Add scheduled reconciliation and missing-event detection.
+Implement the real GitHub evidence path without changing the synthetic demo:
 
-### M4 — Reliability metrics with confidence gates
+1. GitHub App installation lifecycle and short-lived installation tokens.
+2. Repository allowlisting and checkpointed historical backfill.
+3. Replay-safe normalization of PR, review, issue, workflow, and release webhooks.
+4. Data freshness, reconciliation, retry, and dead-letter operations.
+5. Repository-scoped tenant authorization.
+6. Golden-dataset validation between live-normalized evidence and the existing metric contract.
 
-Exit criteria: reliability proxies appear only when required deployment and recovery linkage reaches an explicit quality threshold.
-
-- Define rollback/revert/corrective-deployment linkage strategies.
-- Compute change-failure and recovery proxies with confidence labels.
-- Add evidence drill-down and an explanation of missing/ambiguous linkage.
-- Test boundary cases, late-arriving evidence, recomputation, and definition-version changes.
-
-### M5 — Production hardening and portfolio demo
-
-Exit criteria: a reviewer can clone, run, test, inspect, and securely demo the system from documented instructions.
-
-- Add OIDC/RBAC, audit views, retention jobs, backup/restore runbook, SLOs, alerts, and load tests.
-- Harden containers, add SBOM/scanning/signing, dependency updates, and release automation.
-- Produce deployment guidance for the selected platform and disaster-recovery expectations.
-- Add seeded synthetic organization data and a scripted demo journey.
-- Complete README, contributor guide, API documentation, operations runbook, security policy, architecture decision log, and limitations/ethics documentation.
-
-## Testing strategy
-
-- Unit tests for normalization, linkage, metric formulas, cohort suppression, and authorization rules.
-- Property tests for time windows, percentile calculations, deduplication, and event ordering.
-- Golden-dataset tests containing hand-calculated expected metrics.
-- Integration tests against real PostgreSQL using Testcontainers.
-- Consumer/API contract tests between UI, Java API, and Python worker schemas.
-- GitHub fixture tests for pagination, rate limits, partial responses, redelivery, out-of-order events, and permission loss.
-- End-to-end tests for installation-to-dashboard flows using synthetic fixtures.
-- Security tests for signature validation, tenant isolation, injection, broken access control, and secret redaction.
-- Performance tests based on a documented organization-size profile.
-
-## Scope decisions to confirm before implementation
-
-These answers materially affect the data model and first vertical slice:
-
-1. **Portfolio objective:** optimize for fastest polished demo, or explicitly showcase both Java enterprise services and Python data engineering?
-2. **Tenancy:** one organization for the portfolio MVP, or multi-organization isolation from day one?
-3. **Deployment evidence:** does the target organization use GitHub Deployments/Environments, releases/tags, or an external deployment system as the source of truth?
-4. **Identity and teams:** use GitHub teams as the reporting boundary, or support a separately managed team-to-repository mapping?
-5. **Hosting target:** local Docker demo only initially, or a specific cloud/Kubernetes target?
-6. **History and retention:** desired backfill window and permitted retention for raw webhook payloads and normalized metadata?
-7. **UI ambition:** executive overview only for MVP, or overview plus repository drill-down and metric provenance?
-
-## Recommended defaults
-
-Unless product constraints say otherwise, start with one organization, repository/team aggregation, GitHub teams, twelve months of backfill, seven days of encrypted raw webhook retention, indefinite retention of minimal normalized metadata and aggregate facts, GitHub Deployments as the production source of truth, and an overview plus provenance drill-down. Use Java for the API and Python for ingestion/metrics only if the dual-language portfolio story is intentional.
-
-The first implementation slice should be deliberately narrow: install a test GitHub App, ingest repository and pull-request evidence idempotently into PostgreSQL, compute one versioned PR-cycle-time metric from a golden dataset, and display it with freshness and provenance. That slice proves the architecture before additional GitHub domains are added.
+Real organization connectivity must wait for administrator approval, an approved hosting environment, retention policy, identity configuration, and secret-manager integration.
