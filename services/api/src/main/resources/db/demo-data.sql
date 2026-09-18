@@ -7,6 +7,8 @@ INSERT INTO evidence.repository (repository_id, installation_id, account_id, nam
  ON CONFLICT (repository_id) DO NOTHING;
 
 DELETE FROM evidence.coverage_snapshot WHERE repository_id=9000001;
+DELETE FROM analytics.ai_intervention WHERE repository_id=9000001;
+DELETE FROM analytics.measurement_period WHERE repository_id=9000001;
 DELETE FROM evidence.release WHERE repository_id=9000001;
 DELETE FROM evidence.workflow_job WHERE repository_id=9000001;
 DELETE FROM evidence.bug_file_link WHERE issue_id BETWEEN 9100001 AND 9100099;
@@ -74,3 +76,22 @@ INSERT INTO evidence.coverage_snapshot (repository_id,path,format,line_coverage,
  (9000001,'src/PaymentService.java','JACOCO',.62,CURRENT_TIMESTAMP-INTERVAL '1 day'),
  (9000001,'src/OrderController.java','JACOCO',.84,CURRENT_TIMESTAMP-INTERVAL '1 day'),
  (9000001,'src/FraudClient.java','JACOCO',.41,CURRENT_TIMESTAMP-INTERVAL '1 day');
+
+INSERT INTO analytics.measurement_period (period_id,repository_id,label,period_kind,starts_on,ends_on) VALUES
+ (9700001,9000001,'Four weeks before pilot','BASELINE',CURRENT_DATE-INTERVAL '8 weeks',CURRENT_DATE-INTERVAL '4 weeks'),
+ (9700002,9000001,'Four weeks after pilot','CURRENT',CURRENT_DATE-INTERVAL '4 weeks',CURRENT_DATE);
+INSERT INTO analytics.metric_observation
+ (period_id,metric_key,display_name,category,metric_value,unit,improvement_direction) VALUES
+ (9700001,'test_coverage','Test coverage','QUALITY',62,'percent','HIGHER'),
+ (9700002,'test_coverage','Test coverage','QUALITY',76,'percent','HIGHER'),
+ (9700001,'rework_rate','Rework','EFFORT',14,'percent','LOWER'),
+ (9700002,'rework_rate','Rework','EFFORT',9,'percent','LOWER'),
+ (9700001,'cycle_time','PR cycle time','SPEED',52,'hours','LOWER'),
+ (9700002,'cycle_time','PR cycle time','SPEED',48,'hours','LOWER'),
+ (9700001,'review_wait','Review wait','FLOW',20,'hours','LOWER'),
+ (9700002,'review_wait','Review wait','FLOW',12,'hours','LOWER');
+INSERT INTO analytics.ai_adoption_snapshot (period_id,capability,adoption_percent,evidence_method) VALUES
+ (9700002,'CODING',65,'Synthetic team survey'),(9700002,'TESTING',25,'Synthetic team survey'),
+ (9700002,'PR_REVIEW',20,'Synthetic team survey'),(9700002,'DOCUMENTATION',45,'Synthetic team survey');
+INSERT INTO analytics.ai_intervention (intervention_id,repository_id,capability,title,started_on,ended_on,status) VALUES
+ (9800001,9000001,'TESTING','Approved testing-agent pilot',CURRENT_DATE-INTERVAL '4 weeks',CURRENT_DATE,'COMPLETED');

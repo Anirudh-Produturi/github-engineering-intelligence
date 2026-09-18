@@ -11,10 +11,12 @@ import org.springframework.stereotype.Repository;
 public class DashboardRepository {
     private final JdbcClient jdbc;
     private final AppProperties app;
+    private final OpportunityEngine opportunityEngine;
 
-    public DashboardRepository(JdbcClient jdbc, AppProperties app) {
+    public DashboardRepository(JdbcClient jdbc, AppProperties app, OpportunityEngine opportunityEngine) {
         this.jdbc = jdbc;
         this.app = app;
+        this.opportunityEngine = opportunityEngine;
     }
 
     public Optional<Long> firstRepositoryId() {
@@ -44,6 +46,32 @@ public class DashboardRepository {
             SELECT COUNT(*)/3.0 value FROM evidence.release
             WHERE repository_id=:id AND NOT prerelease AND published_at >= CURRENT_TIMESTAMP-INTERVAL '90 days'
             """).param("id", repositoryId).query().singleRow().get("value")).doubleValue();
+
+        var outcomes = jdbc.sql("""
+            SELECT b.metric_key,b.display_name,b.category,b.metric_value before_value,
+                   c.metric_value after_value,b.unit,b.improvement_direction
+            FROM analytics.metric_observation b
+            JOIN analytics.measurement_period bp ON bp.period_id=b.period_id AND bp.period_kind='BASELINE'
+            JOIN analytics.measurement_period cp ON cp.repository_id=bp.repository_id AND cp.period_kind='CURRENT'
+            JOIN analytics.metric_observation c ON c.period_id=cp.period_id AND c.metric_key=b.metric_key
+            WHERE bp.repository_id=:id ORDER BY b.category,b.display_name
+            """).param("id", repositoryId).query((rs,n) -> {
+                double before=rs.getDouble("before_value"), after=rs.getDouble("after_value");
+                boolean higher="HIGHER".equals(rs.getString("improvement_direction"));
+                double improvement=before==0?0:(higher?(after-before):(before-after))*100.0/before;
+                return new DashboardMetrics.OutcomeComparison(rs.getString("metric_key"),rs.getString("display_name"),
+                    rs.getString("category"),before,after,rs.getString("unit"),improvement);
+            }).list();
+        var adoption = jdbc.sql("""
+            SELECT a.capability,a.adoption_percent,a.evidence_method
+            FROM analytics.ai_adoption_snapshot a JOIN analytics.measurement_period p USING(period_id)
+            WHERE p.repository_id=:id AND p.period_kind='CURRENT' ORDER BY a.capability
+            """).param("id",repositoryId).query((rs,n) -> {
+                double percent=rs.getDouble("adoption_percent");
+                return new DashboardMetrics.AiAdoption(rs.getString("capability"),percent,
+                    percent>=60?"HIGH":percent>=35?"MEDIUM":"LOW",rs.getString("evidence_method"));
+            }).list();
+        var opportunities=opportunityEngine.match(outcomes,adoption);
 
         var frequent = jdbc.sql("""
             SELECT fc.path, COUNT(*) changes, SUM(fc.additions+fc.deletions) churn
@@ -105,6 +133,7 @@ public class DashboardRepository {
         return new DashboardMetrics(repositoryId,repository,
             new DashboardMetrics.Summary(number(summary.get("cycle")).doubleValue(),reviewWait,
                 number(summary.get("open_prs")).longValue(),releasesPerMonth,openIssues),
+            outcomes,adoption,opportunities,
             frequent,coverage,risky,aging,flaky,bugs,signal,
             new DashboardMetrics.DataQuality("Synthetic demo evidence","Generated at startup","Demonstration only",
                 "Signals illustrate metric behavior and must not be used for employment decisions."));

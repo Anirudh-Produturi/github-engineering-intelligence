@@ -12,3 +12,13 @@
 | Release frequency | Non-prerelease releases in the trailing 90 days divided by three. | A GitHub release may not equal a production deployment. |
 | Bug hotspot | Count of bug-labelled issues linked to fixing-PR paths. | Depends on consistent labels and linkage. |
 | Workload concentration | Largest share of pending review demand, suppressed below the reviewer cohort. | Team resilience signal only; no individual rankings. |
+
+## AI opportunity and impact demonstration
+
+AI capability adoption is synthetic, team-level survey evidence in the personal demo. The opportunity engine uses visible rules rather than a composite efficiency score:
+
+- Testing adoption below 50% plus coverage below 80% suggests a testing-agent pilot.
+- PR-review adoption below 50% plus review wait above eight hours suggests an AI-assisted PR-preparation pilot.
+- Coding adoption below 50% plus cycle time above 48 hours suggests a narrowly scoped coding-agent pilot.
+
+Before/after change is normalized so a positive percentage always means movement in the declared improvement direction. The dashboard does not claim causality; it recommends a controlled, time-boxed experiment and contextual review.

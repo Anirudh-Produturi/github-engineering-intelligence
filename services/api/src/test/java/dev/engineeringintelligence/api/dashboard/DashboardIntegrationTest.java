@@ -24,5 +24,5 @@ class DashboardIntegrationTest {
     }
     @Autowired MockMvc mvc;
     @Test void rendersSyntheticDashboard() throws Exception { mvc.perform(get("/")).andExpect(status().isOk()).andExpect(view().name("dashboard")).andExpect(content().string(org.hamcrest.Matchers.containsString("acme-demo/checkout-service"))); }
-    @Test void exposesSameMetricsAsJson() throws Exception { mvc.perform(get("/api/v1/repositories/9000001/metrics")).andExpect(status().isOk()).andExpect(jsonPath("$.summary.openPullRequests").value(3)).andExpect(jsonPath("$.flakyJobs[0].job").value("unit-tests")); }
+    @Test void exposesSameMetricsAsJson() throws Exception { mvc.perform(get("/api/v1/repositories/9000001/metrics")).andExpect(status().isOk()).andExpect(jsonPath("$.summary.openPullRequests").value(3)).andExpect(jsonPath("$.flakyJobs[0].job").value("unit-tests")).andExpect(jsonPath("$.outcomeComparisons.length()").value(4)).andExpect(jsonPath("$.aiAdoption.length()").value(4)).andExpect(jsonPath("$.opportunities[0].capability").value("TESTING")); }
 }

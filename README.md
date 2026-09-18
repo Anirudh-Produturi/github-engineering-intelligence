@@ -30,6 +30,8 @@ The API health endpoint is `http://localhost:8080/actuator/health`.
 
 Open the personal demo dashboard at `http://localhost:8080/`. Its synthetic dataset demonstrates PR cycle time, review wait time, changed-file frequency, coverage risk, flaky CI candidates, PR size/risk, issue aging, release frequency, bug hotspots, and privacy-protected team workload concentration.
 
+The demo also includes an AI Opportunity and Engineering Impact slice: aggregated adoption for coding, testing, PR-review, and documentation capabilities; baseline-versus-current outcomes grouped under Speed, Effort, Quality, and Flow; and explainable recommendations for time-boxed experiments. It explicitly labels observed changes as correlation rather than proof of causation.
+
 Personal mode is the default. It seeds a clearly synthetic organization and repository and permits local API access without configuring an identity provider. Check the active behavior at `GET /api/v1/system/mode`.
 
 ## Organization mode

@@ -15,6 +15,21 @@
     <article><label>Releases / month</label><strong th:text="${#numbers.formatDecimal(dashboard.summary.releasesPerMonth,1,1)}">0</strong><small>Trailing 90 days</small></article>
     <article><label>Open issues</label><strong th:text="${dashboard.summary.openIssues}">0</strong><small>All age bands</small></article>
   </section>
+  <section class="impact-grid">
+    <article class="panel impact"><span class="section-tag">MEASURE</span><h2>Engineering outcomes after the AI pilot</h2><p>Baseline and current team-level signals. Positive change means movement in the desired direction.</p>
+      <table><thead><tr><th>Dimension</th><th>Signal</th><th>Before</th><th>After</th><th>Change</th></tr></thead><tbody>
+        <tr th:each="o:${dashboard.outcomeComparisons}"><td><span class="category" th:text="${o.category}">QUALITY</span></td><td th:text="${o.name}">Metric</td>
+          <td th:text="${#numbers.formatDecimal(o.before,1,0)}+' '+${o.unit}">0</td><td th:text="${#numbers.formatDecimal(o.after,1,0)}+' '+${o.unit}">0</td>
+          <td><strong th:classappend="${o.improvementPercent >= 0}?'positive':'negative'" th:text="${o.improvementPercent >= 0}?('+'+${#numbers.formatDecimal(o.improvementPercent,1,0)}+'%'):(${#numbers.formatDecimal(o.improvementPercent,1,0)}+'%')">0%</strong></td></tr>
+      </tbody></table><div class="caution">Observed improvement during the pilot is correlation, not proof that AI caused the change.</div>
+    </article>
+    <article class="panel"><span class="section-tag">UNDERSTAND ADOPTION</span><h2>Team AI capability adoption</h2><p>Aggregated synthetic survey evidence; no individual usage tracking.</p>
+      <div class="adoption" th:each="a:${dashboard.aiAdoption}"><div><strong th:text="${#strings.replace(a.capability,'_',' ')}">Capability</strong><span class="pill" th:text="${a.level}">LOW</span></div><div class="track"><i th:style="'width:'+${a.adoptionPercent}+'%'"></i><span th:text="${#numbers.formatDecimal(a.adoptionPercent,1,0)}+'%'">0%</span></div></div>
+    </article>
+  </section>
+  <section class="opportunities"><div class="section-heading"><span class="section-tag">CONNECT THE TWO</span><h2>Explainable AI opportunities</h2><p>Recommendations connect an engineering constraint with an underused capability.</p></div>
+    <article class="opportunity" th:each="o:${dashboard.opportunities}"><div><span class="pill" th:text="${o.capability}">TESTING</span><span class="confidence" th:text="${o.confidence}+' confidence'">confidence</span></div><h3 th:text="${o.title}">Opportunity</h3><p th:text="${o.why}">Why</p><strong>Recommended experiment</strong><p th:text="${o.recommendation}">Recommendation</p></article>
+  </section>
   <section class="grid">
     <article class="panel"><h2>Large or risky pull requests</h2><p>Explainable size signal; not a quality judgment.</p><table><thead><tr><th>PR</th><th>Churn</th><th>Files</th><th>Signal</th></tr></thead><tbody>
       <tr th:each="r:${dashboard.riskyPullRequests}"><td th:text="'#'+${r.number}">#1</td><td th:text="${r.size}">0</td><td th:text="${r.changedFiles}">0</td><td><span class="pill" th:classappend="${r.level}" th:text="${r.level}+' '+${r.score}">risk</span></td></tr>
@@ -33,4 +48,3 @@
   </section>
 </main><footer>Metric definitions are versioned and intended for team-level system improvement.</footer>
 </body></html>
-
